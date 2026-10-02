@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>1. Dereceden Homojen Diferansiyel Denklem Çözücü</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0f7ff',
+                            100: '#e0effe',
+                            500: '#0284c7',
+                            600: '#0369a1',
+                            700: '#075985',
+                            900: '#0c4a6e',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- MathJax for formula rendering in result steps -->
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']]
+            },
+            svg: { fontCache: 'global' }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <!-- MathLive for Visual Math Input -->
+    <script defer src="https://unpkg.com/mathlive"></script>
+    
+    <link rel="stylesheet" href="style.css">
+    
+    <style>
+        /* MathLive custom styling to match our dark theme */
+        math-field {
+            font-size: 1.25rem;
+            background-color: rgba(15, 23, 42, 0.9);
+            color: white;
+            border: 1px solid #334155;
+            border-radius: 0.75rem;
+            padding: 0.5rem 1rem;
+            width: 100%;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            --keyboard-zindex: 100;
+        }
+        math-field:focus-within {
+            border-color: #0ea5e9;
+            box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.2);
+        }
+        math-field::part(virtual-keyboard-toggle) {
+            color: #38bdf8;
+        }
+        /* Gereksiz 3 çizgili menüyü gizle */
+        math-field::part(menu-toggle) {
+            display: none;
+        }
+        /* Telefondaki kaydırma çubuğunu gizle ama kaydırılabilir kalsın */
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col font-sans antialiased selection:bg-sky-500 selection:text-white">
+
+    <!-- Navbar -->
+    <header class="border-b border-slate-800 bg-slate-900/80 backdrop-blur sticky top-0 z-50">
+        <div class="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-sky-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-sky-500/20">
+                    <i data-lucide="function-square" class="w-6 h-6 text-white"></i>
+                </div>
+                <div>
+                    <h1 class="text-lg font-bold bg-clip-text text-transparent bg-gradient-to-r from-sky-400 via-indigo-300 to-white">
+                        DifÇözücü
+                    </h1>
+                    <p class="text-xs text-slate-400">1. Dereceden Homojen Diferansiyel Denklem Çözücü</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-2">
+                <span class="px-2.5 py-1 rounded-full text-xs font-medium bg-sky-950 text-sky-400 border border-sky-800/60 flex items-center gap-1.5">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                    C Motoru Destekli
+                </span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-1 max-w-5xl w-full mx-auto px-4 py-8 space-y-8">
+
+        <!-- Bilgilendirme Banner -->
+        <div class="p-4 rounded-2xl bg-gradient-to-r from-sky-900/30 to-indigo-900/30 border border-sky-700/30 backdrop-blur-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+            <div class="flex items-start space-x-3">
+                <div class="p-2 rounded-lg bg-sky-500/10 text-sky-400 mt-0.5">
+                    <i data-lucide="info" class="w-5 h-5"></i>
+                </div>
+                <div class="text-sm">
+                    <span class="font-semibold text-sky-300">Yöntem Kuralı:</span> Bu sistem yalnızca 
+                    <span class="text-white font-mono bg-slate-800/80 px-1.5 py-0.5 rounded border border-slate-700">1. mertebeden</span> ve 
+                    <span class="text-white font-mono bg-slate-800/80 px-1.5 py-0.5 rounded border border-slate-700">homojen</span> diferansiyel denklemleri çözebilir.
+                    Denklem homojen değilse çözüme devam edilmez.
+                </div>
+            </div>
+            <div class="text-xs text-slate-400 whitespace-nowrap bg-slate-800/60 px-3 py-1.5 rounded-lg border border-slate-700/50">
+                Dönüşüm Tekniği: <span class="text-amber-300 font-mono font-semibold">y = v·x</span>
+            </div>
+        </div>
+
+        <!-- Denklem Giriş Kartı -->
+        <div class="bg-slate-800/70 border border-slate-700/70 rounded-2xl p-6 shadow-xl backdrop-blur-md space-y-6">
+            
+            <!-- Giriş Formatı Sekmeleri -->
+            <div class="flex flex-col md:flex-row items-start md:items-center justify-between border-b border-slate-700 pb-4 gap-3">
+                <span class="text-sm font-medium text-slate-300 shrink-0">Giriş Biçimi Seçin:</span>
+                <div class="w-full overflow-x-auto pb-1 md:pb-0 hide-scrollbar">
+                    <div class="inline-flex p-1 bg-slate-900/80 rounded-xl border border-slate-700/80" id="tabContainer">
+                        <button id="tabDiff" onclick="switchMode('differential')" class="tab-btn active px-4 py-2 rounded-lg text-xs font-medium transition-all duration-200">
+                            $$M(x,y)dx + N(x,y)dy = 0$$
+                        </button>
+                        <button id="tabDeriv" onclick="switchMode('derivative')" class="tab-btn px-4 py-2 rounded-lg text-xs font-medium transition-all duration-200 text-slate-400 hover:text-white">
+                            $$\frac{dy}{dx} = \frac{P(x,y)}{Q(x,y)}$$
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-sky-900/20 border border-sky-800/40 rounded-xl p-3 text-sm text-sky-200 flex items-start gap-2">
+                <i data-lucide="keyboard" class="w-5 h-5 text-sky-400 flex-shrink-0"></i>
+                <p>İpuçları: Sağ taraftaki <b>klavye simgesine</b> tıklayarak görsel klavyeyi açıp köklü, üslü her türlü ifadeyi kolayca girebilirsiniz!</p>
+            </div>
+
+            <!-- Form Alanları: 1. Format: M dx + N dy = 0 -->
+            <div id="differentialInputs" class="space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="space-y-2">
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-sky-400">
+                            M(x, y) İfadesi (dx katsayısı)
+                        </label>
+                        <div class="flex items-center gap-3">
+                            <math-field id="inputM" class="flex-1">x^2+y^2</math-field>
+                            <div class="flex items-center justify-center bg-slate-800/80 px-4 py-2.5 rounded-xl border border-slate-700 shadow-inner min-w-[3.5rem]">
+                                <span class="text-lg font-mono text-sky-400 font-bold">dx</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="space-y-2">
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-indigo-400">
+                            N(x, y) İfadesi (dy katsayısı)
+                        </label>
+                        <div class="flex items-center gap-3">
+                            <math-field id="inputN" class="flex-1">-2xy</math-field>
+                            <div class="flex items-center justify-center bg-slate-800/80 px-4 py-2.5 rounded-xl border border-slate-700 shadow-inner min-w-[3.5rem]">
+                                <span class="text-lg font-mono text-indigo-400 font-bold">dy</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Form Alanları: 2. Format: dy/dx = P / Q -->
+            <div id="derivativeInputs" class="space-y-4 hidden">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="space-y-2">
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-sky-400">
+                            Pay: P(x, y)
+                        </label>
+                        <math-field id="inputP">x^2+y^2</math-field>
+                    </div>
+
+                    <div class="space-y-2">
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-indigo-400">
+                            Payda: Q(x, y)
+                        </label>
+                        <math-field id="inputQ">2xy</math-field>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Canlı Denklem Önizlemesi -->
+            <div class="p-4 rounded-xl bg-slate-900/60 border border-slate-700/50 flex flex-col md:flex-row items-center justify-between gap-3">
+                <div class="text-xs text-slate-400 font-medium flex items-center gap-1.5">
+                    <i data-lucide="eye" class="w-4 h-4 text-sky-400"></i>
+                    Canlı Denklem Görünümü:
+                </div>
+                <div id="equationPreview" class="text-lg md:text-xl font-medium text-sky-200 overflow-x-auto py-1">
+                    <!-- Dinamik LaTeX buraya gelecek -->
+                </div>
+            </div>
+
+            <!-- Hazır Örnek Butonları -->
+            <div class="space-y-2 pt-2">
+                <div class="flex items-center justify-between">
+                    <span class="text-xs uppercase tracking-wider text-slate-400 font-semibold flex items-center gap-1">
+                        <i data-lucide="sparkles" class="w-3.5 h-3.5 text-amber-400"></i>
+                        Hızlı Deneme Örnekleri:
+                    </span>
+                    <span class="text-[11px] text-slate-500">Tıklayıp hemen test edin</span>
+                </div>
+                <div class="flex flex-wrap gap-2">
+                    <button onclick="loadExample(1)" class="example-btn badge-homo">
+                        ✓ $(x^2+y^2)dx - 2xy\,dy=0$
+                    </button>
+                    <button onclick="loadExample(2)" class="example-btn badge-homo">
+                        ✓ $(x+y)dx - x\,dy=0$
+                    </button>
+                    <button onclick="loadExample(3)" class="example-btn badge-non-homo">
+                        ✗ $(x^2+y)dx + x\,dy=0$
+                    </button>
+                    <button onclick="loadExample(4)" class="example-btn badge-non-homo">
+                        ✗ $\sqrt{x}dx + y^2\,dy=0$
+                    </button>
+                </div>
+            </div>
+
+            <!-- Çöz Butonu -->
+            <div class="pt-4">
+                <button id="solveBtn" onclick="solveEquation()" 
+                    class="w-full bg-gradient-to-r from-sky-500 via-indigo-600 to-sky-600 hover:from-sky-400 hover:via-indigo-500 hover:to-sky-500 text-white font-semibold py-3.5 px-6 rounded-xl shadow-lg shadow-sky-600/30 transition-all duration-200 flex items-center justify-center gap-2 group active:scale-[0.99]">
+                    <i data-lucide="calculator" class="w-5 h-5 group-hover:rotate-12 transition-transform"></i>
+                    <span class="text-base">Denklemi İncele ve Çöz</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Sonuç Alanı -->
+        <div id="resultContainer" class="hidden space-y-6">
+            <!-- Dinamik Olarak JS Tarafından Doldurulacak -->
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-slate-800 py-6 text-center text-xs text-slate-500 mt-auto">
+        <p>1. Dereceden Homojen Diferansiyel Denklem Çözücü — C Dili & Node.js Mimarisi</p>
+    </footer>
+
+    <script src="app.js"></script>
+</body>
+</html>
